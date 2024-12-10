@@ -13,8 +13,10 @@ defmodule NervesMixTargetBug.MixProject do
       archives: [nerves_bootstrap: "~> 1.13"],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      deps_path: "deps/#{Mix.target()}",
       releases: [{@app, release()}],
-      preferred_cli_target: [run: :host, test: :host]
+      preferred_cli_target: [run: :host, test: :host],
+      lockfile: "#{Mix.target()}.mix.lock"
     ]
   end
 
@@ -27,7 +29,7 @@ defmodule NervesMixTargetBug.MixProject do
   end
 
   # Run "mix help deps" to learn about dependencies.
-  defp deps do
+  defp deps() do
     [
       # Dependencies for all targets
       {:nerves, "~> 1.10", runtime: false},
@@ -42,18 +44,25 @@ defmodule NervesMixTargetBug.MixProject do
       # Dependencies for all targets except :host
       {:nerves_pack, "~> 0.7.1", targets: @all_targets},
 
-      # Dependencies for specific targets
-      # NOTE: It's generally low risk and recommended to follow minor version
-      # bumps to Nerves systems. Since these include Linux kernel and Erlang
-      # version updates, please review their release notes in case
-      # changes to your application are needed.
-      {:nerves_system_rpi3, "~> 1.24", runtime: false, targets: :rpi3},
+    ] ++ deps(Mix.target())
+  end
+
+  # Dependencies for specific targets
+  # NOTE: It's generally low risk and recommended to follow minor version
+  # bumps to Nerves systems. Since these include Linux kernel and Erlang
+  # version updates, please review their release notes in case
+  # changes to your application are needed.
+  defp deps(:rpi3), do: [{:nerves_system_rpi3, "~> 1.24", runtime: false, targets: :rpi3}]
+  defp deps(:custom_rpi3) do
+    [
       {:custom_rpi3,
-       git: "https://github.com/Damirados/custom_rpi3.git",
+       runtime: false,
+       git: "https://github.com/Damirados/custom_rpi3",
        branch: "gcc14-toolchain",
        targets: :custom_rpi3}
     ]
   end
+  defp deps(_), do: []
 
   def release do
     [
